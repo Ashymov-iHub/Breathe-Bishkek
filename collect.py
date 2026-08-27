@@ -1,0 +1,58 @@
+"""Breathe Bishkek — сбор данных о качестве воздуха и погоде."""
+
+import requests
+import csv
+import os
+from datetime import datetime, timezone, timedelta
+
+LAT, LON = 42.8746, 74.5698
+FILE = "data/bishkek_air.csv"
+BISHKEK_TZ = timezone(timedelta(hours=6))
+
+
+def collect():
+    air = requests.get(
+        "https://air-quality-api.open-meteo.com/v1/air-quality",
+        params={"latitude": LAT, "longitude": LON,
+                "current": "pm2_5,pm10,carbon_monoxide",
+                "timezone": "Asia/Bishkek"},
+        timeout=30,
+    ).json()["current"]
+
+    weather = requests.get(
+        "https://api.open-meteo.com/v1/forecast",
+        params={"latitude": LAT, "longitude": LON,
+                "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,pressure_msl",
+                "timezone": "Asia/Bishkek"},
+        timeout=30,
+    ).json()["current"]
+
+    return {
+        "time": air["time"],
+        "collected_at": datetime.now(BISHKEK_TZ).isoformat(timespec="seconds"),
+        "pm2_5": air["pm2_5"],
+        "pm10": air["pm10"],
+        "co": air["carbon_monoxide"],
+        "temp": weather["temperature_2m"],
+        "humidity": weather["relative_humidity_2m"],
+        "wind": weather["wind_speed_10m"],
+        "pressure": weather["pressure_msl"],
+    }
+
+
+def main():
+    row = collect()
+    os.makedirs("data", exist_ok=True)
+    exists = os.path.exists(FILE)
+
+    with open(FILE, "a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=row.keys())
+        if not exists:
+            writer.writeheader()
+        writer.writerow(row)
+
+    print("OK:", row)
+
+
+if __name__ == "__main__":
+    main()
