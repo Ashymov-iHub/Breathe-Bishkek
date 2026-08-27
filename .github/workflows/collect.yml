@@ -2,7 +2,7 @@ name: Collect Bishkek air data
 
 on:
   schedule:
-    - cron: "5 * * * *"
+    - cron: "37 * * * *"
   workflow_dispatch:
 
 jobs:
