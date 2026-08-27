@@ -1,0 +1,2 @@
+time,collected_at,pm2_5,pm10,co,temp,humidity,wind,pressure
+2026-08-27T19:00,2026-08-27T19:00:52+06:00,13.4,13.8,176.0,28.0,36,6.0,1009.0
