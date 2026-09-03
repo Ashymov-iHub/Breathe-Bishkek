@@ -1,10 +1,9 @@
 """Breathe Bishkek — сбор данных о качестве воздуха и погоде."""
-
 import os
 import csv
 import time
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 LAT, LON = 42.8746, 74.5698
 FILE = "data/bishkek_air.csv"
@@ -26,14 +25,14 @@ def get_with_retry(url, params, tries=3, timeout=60):
 
 
 def collect():
-        air = get_with_retry(
+    air = get_with_retry(
         "https://air-quality-api.open-meteo.com/v1/air-quality",
         params={"latitude": LAT, "longitude": LON,
                 "current": "pm2_5,pm10,carbon_monoxide",
                 "timezone": "Asia/Bishkek"},
     )["current"]
 
-        weather = get_with_retry(
+    weather = get_with_retry(
         "https://api.open-meteo.com/v1/forecast",
         params={"latitude": LAT, "longitude": LON,
                 "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,pressure_msl",
@@ -57,13 +56,11 @@ def main():
     row = collect()
     os.makedirs("data", exist_ok=True)
     exists = os.path.exists(FILE)
-
     with open(FILE, "a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=row.keys())
         if not exists:
             writer.writeheader()
         writer.writerow(row)
-
     print("OK:", row)
 
 
