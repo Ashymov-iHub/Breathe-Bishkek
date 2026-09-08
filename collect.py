@@ -1,21 +1,19 @@
 """Breathe Bishkek — сбор данных о качестве воздуха и погоде.
 
-Два источника:
+Источники:
   1. Open-Meteo — модельные данные (CAMS)
-  2. WAQI/aqicn — реальный датчик в Бишкеке
+  2. sensor.community — реальные датчики SDS011 в Бишкеке
 """
 
 import requests
 import csv
 import os
+import statistics
 from datetime import datetime, timezone, timedelta
 
 LAT, LON = 42.8746, 74.5698
 FILE = "data/bishkek_air.csv"
 BISHKEK_TZ = timezone(timedelta(hours=6))
-
-AQICN_TOKEN = os.environ.get("AQICN_TOKEN")
-STATION = "@93670"  # UN House, Bishkek
 
 
 def get_model_data():
@@ -39,37 +37,42 @@ def get_model_data():
     return air, weather
 
 
-def get_sensor_data():
-    """Реальный датчик через WAQI. Возвращает None при любой проблеме."""
-    if not AQICN_TOKEN:
-        print("WARNING: AQICN_TOKEN не задан")
-        return None, None, None
-
+def get_sensors():
+    """Реальные датчики sensor.community в радиусе 10 км от центра."""
     try:
-        r = requests.get(
-            f"https://api.waqi.info/feed/{STATION}/",
-            params={"token": AQICN_TOKEN},
+        data = requests.get(
+            f"https://data.sensor.community/airrohr/v1/filter/area={LAT},{LON},10",
             timeout=30,
         ).json()
-
-        if r.get("status") != "ok":
-            print("WARNING: WAQI вернул", r.get("status"), r.get("data"))
-            return None, None, None
-
-        iaqi = r["data"].get("iaqi", {})
-        pm25 = iaqi.get("pm25", {}).get("v")
-        pm10 = iaqi.get("pm10", {}).get("v")
-        obs_time = r["data"].get("time", {}).get("s")
-        return pm25, pm10, obs_time
-
     except Exception as e:
-        print("WARNING: ошибка WAQI:", e)
-        return None, None, None
+        print("WARNING: sensor.community недоступен:", e)
+        return {}
+
+    readings = {}
+    for item in data:
+        sid = item["sensor"]["id"]
+        if sid in readings:
+            continue
+        values = {v["value_type"]: v["value"] for v in item["sensordatavalues"]}
+        if "P2" in values:
+            try:
+                readings[sid] = {
+                    "pm2_5": float(values["P2"]),
+                    "pm10": float(values.get("P1", 0)) or None,
+                    "timestamp": item["timestamp"],
+                }
+            except (ValueError, TypeError):
+                continue
+
+    return readings
 
 
 def main():
     air, weather = get_model_data()
-    sensor_pm25, sensor_pm10, sensor_time = get_sensor_data()
+    sensors = get_sensors()
+
+    pm25_values = [s["pm2_5"] for s in sensors.values()]
+    pm10_values = [s["pm10"] for s in sensors.values() if s["pm10"]]
 
     row = {
         "time": air["time"],
@@ -78,10 +81,14 @@ def main():
         "model_pm2_5": air["pm2_5"],
         "model_pm10": air["pm10"],
         "model_co": air["carbon_monoxide"],
-        # --- реальный датчик WAQI ---
-        "sensor_pm2_5": sensor_pm25,
-        "sensor_pm10": sensor_pm10,
-        "sensor_time": sensor_time,
+        # --- реальные датчики (агрегаты) ---
+        "sensor_count": len(pm25_values),
+        "sensor_pm2_5_median": round(statistics.median(pm25_values), 2) if pm25_values else None,
+        "sensor_pm2_5_min": min(pm25_values) if pm25_values else None,
+        "sensor_pm2_5_max": max(pm25_values) if pm25_values else None,
+        "sensor_pm10_median": round(statistics.median(pm10_values), 2) if pm10_values else None,
+        # --- сырые значения по каждому датчику ---
+        "sensor_raw": ";".join(f"{sid}={s['pm2_5']}" for sid, s in sorted(sensors.items())),
         # --- погода ---
         "temp": weather["temperature_2m"],
         "humidity": weather["relative_humidity_2m"],
