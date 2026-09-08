@@ -2,14 +2,15 @@ name: Collect Bishkek air data
 
 on:
   schedule:
-    - cron: "37 * * * *"
+    - cron: "37 */3 * * *"
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   collect:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -20,6 +21,8 @@ jobs:
       - run: pip install requests
 
       - run: python collect.py
+        env:
+          AQICN_TOKEN: ${{ secrets.AQICN_TOKEN }}
 
       - name: Commit data
         run: |
