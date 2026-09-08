@@ -21,8 +21,6 @@ jobs:
       - run: pip install requests
 
       - run: python collect.py
-        env:
-          AQICN_TOKEN: ${{ secrets.AQICN_TOKEN }}
 
       - name: Commit data
         run: |
