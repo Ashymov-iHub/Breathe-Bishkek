@@ -51,3 +51,10 @@ on the eastern side of the city; a model grid cell is not a point measurement; h
 is not removed, only stratified.
 
 ![Network vs model](docs/fig_network_vs_model.png)
+
+## Pre-registered check (written 28 Oct 2026, before any November data)
+
+If the Jan–Mar 2026 finding holds, the sensor-network / model ratio of monthly median PM2.5
+for November 2026 will be at least 1.4, using the same method (median of at least 3 sensors,
+matched hours, Open-Meteo/CAMS at 42.8746, 74.5698).
+If the ratio is below 1.4, I will report that the winter gap did not replicate.
