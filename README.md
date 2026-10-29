@@ -58,3 +58,19 @@ If the Jan–Mar 2026 finding holds, the sensor-network / model ratio of monthly
 for November 2026 will be at least 1.4, using the same method (median of at least 3 sensors,
 matched hours, Open-Meteo/CAMS at 42.8746, 74.5698).
 If the ratio is below 1.4, I will report that the winter gap did not replicate.
+
+## Winter 2026–27 log
+
+**October 2026** (same method: median of at least 3 sensors vs Open-Meteo/CAMS, matched hours)
+
+- The weekly sensor/model ratio rose from 0.7 (week to 4 Oct, mean temperature 18 °C)
+  to 1.4–1.7 (5–25 Oct) and 2.7 (26–28 Oct, mean temperature about 5 °C).
+- At wind speeds below 1 m/s the network median was 26.5 µg/m³ vs 13.2 for the model (2.0x);
+  at 2 m/s and above the two were similar. Calm hours are also mostly night hours,
+  so the effects of wind, time of day and temperature are not yet separated.
+- After 15 Oct the daily profile shows a night peak (about 45–50 µg/m³, 20:00–02:00)
+  and an afternoon minimum (about 7 µg/m³).
+- The daily mean exceeded the WHO 24-hour guideline (15 µg/m³) on 18 of 28 days.
+  The highest daily mean was 61.6 µg/m³ on 28 October.
+
+![October 2026](docs/fig_october.png)
